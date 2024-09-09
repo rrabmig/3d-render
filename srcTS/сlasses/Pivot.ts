@@ -60,9 +60,9 @@ class Pivot {
   }
 
   public Rotate(angle: number, axis: Axis): void {
-    this.XAxis.Rotate(angle, axis);
-    this.YAxis.Rotate(angle, axis);
-    this.ZAxis.Rotate(angle, axis);
+    this.XAxis = this.XAxis.Rotate(angle, axis);
+    this.YAxis = this.YAxis.Rotate(angle, axis);
+    this.ZAxis = this.ZAxis.Rotate(angle, axis);
   }
 
   public static basePivot(center: Vector3) {

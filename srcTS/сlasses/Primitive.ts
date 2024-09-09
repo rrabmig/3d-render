@@ -50,7 +50,7 @@ abstract class Primitive {
     public Move(v: Vector3): void {
         this.pivot.Move(v);
         for (let i = 0; i < this.localVertices.length; i++) {
-            this.localVertices[i] = Vector3.Add(this.localVertices[i], v);
+            this.globalVertices[i] = this.pivot.ToGlobalCoords(this.localVertices[i]);
         }
     }
 

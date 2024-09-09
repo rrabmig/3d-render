@@ -8,8 +8,38 @@ class Vector3 {
         this.z = z;
     }
 
-    public Rotate(angle: number, axis: Axis): void {
-        // TODO
+    setThis(v: Vector3) {
+        this.x = v.x
+        this.y = v.y
+        this.z = v.z
+    }
+
+    public Rotate(angle: number, axis: Axis): Vector3 {
+        let matrix: Matrix3x3
+        switch (axis.axis) {
+            case 'x':
+                matrix = new Matrix3x3(1, 0, 0,
+                     0, Math.cos(angle), -Math.sin(angle),
+                      0, Math.sin(angle), Math.cos(angle)
+                );
+                this.setThis(matrix.MultiplyByVector3(this));
+                break;
+            case 'y':
+                matrix = new Matrix3x3(Math.cos(angle), 0, Math.sin(angle),
+                     0, 1, 0,
+                     -Math.sin(angle), 0, Math.cos(angle)
+                );
+                this.setThis(matrix.MultiplyByVector3(this));
+                break;
+            case 'z':
+                matrix = new Matrix3x3(Math.cos(angle), -Math.sin(angle), 0,
+                     Math.sin(angle), Math.cos(angle), 0,
+                     0, 0, 1
+                );
+                this.setThis(matrix.MultiplyByVector3(this));
+                break;
+        }
+        return this
     }
 
     public MultiplyByNumber(n: number) {

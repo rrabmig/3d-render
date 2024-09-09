@@ -1,0 +1,3 @@
+class Thorus extends Primitive {
+    
+}
