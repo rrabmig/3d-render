@@ -61,7 +61,7 @@ abstract class Primitive {
 
     public Scale(k: number): void {
         for (let i = 0; i < this.localVertices.length; i++) {
-            this.localVertices[i].MultiplyByNumber(k);
+            this.localVertices[i] = this.localVertices[i].MultiplyByNumber(k);
         }
         this.globalVertices = this.localVertices.map(v => this.pivot.ToGlobalCoords(v));
     }
