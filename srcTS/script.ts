@@ -2,7 +2,6 @@ const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 const height = 600;
 const width = 600;
-const fps = 30;
 
 canvas.style.width = `${width}px`;
 canvas.style.height = `${height}px`;
@@ -11,7 +10,52 @@ canvas.width = width;
 canvas.height = height;
 
 const camera = new Camera(new Vector3(0, 0, 0), 5, 100, width, height);
-const environment = new Environment(camera);
+const lightDirection = Vector3.Normalize(new Vector3(-1, -1, -1));
+
+const environment = new Environment(camera, lightDirection);
+
+// Разные сцены
+
+const scale = 0.2;
+
+const initialPosition = new Vector3(0, 2.5, 10)
+const initialRoatateXYZ = [Math.PI, 0, 0]
+
+const animate = false
+const fps = 30;
+startModelScene("./models/Lee.obj", scale, initialPosition, initialRoatateXYZ, animate);
+
+//startIcosahedronScene();
+
+//startCubesScene();
+
+//startTriangleScene();
+
+function startTriangleScene() {
+  // передний треугольник
+  const triangle = new Triangle(Pivot.basePivot(new Vector3(0, 0, 40)), [
+    new Vector3(20, 0, 0),
+    new Vector3(0, 0, 10),
+    new Vector3(0, 20, 0),
+  ]);
+  triangle.Rotate(Math.PI / 3, new Axis("x"));
+  triangle.Rotate(Math.PI / 5, new Axis("z"));
+  triangle.Rotate(Math.PI / 7, new Axis("y"));
+  triangle.Move(new Vector3(0, 0, 40));
+
+  const triangle2 = new Triangle(Pivot.basePivot(new Vector3(0, 0, 40)), [
+    new Vector3(20, 0, 0),
+    new Vector3(0, 0, 10),
+    new Vector3(0, 20, 0),
+  ]);
+  triangle2.Rotate(Math.PI / 4, new Axis("x"));
+  triangle2.Rotate(Math.PI / 5, new Axis("z"));
+  triangle2.Move(new Vector3(0, 0, 60));
+
+  environment.addPrimitive(triangle);
+  environment.addPrimitive(triangle2);
+  environment.drawAll(ctx);
+}
 
 function startCubesScene() {
   const cube = new Cube(
@@ -19,37 +63,34 @@ function startCubesScene() {
     Vector3.Zero(),
     10
   );
-  const cube2 = new Cube(
-    Pivot.basePivot(new Vector3(100, 100, 500)),
-    Vector3.Zero(),
-    20
-  );
+  cube.Rotate(Math.PI / 3, new Axis("x"));
+  cube.Rotate(Math.PI / 5, new Axis("z"));
+  cube.Rotate(Math.PI / 7, new Axis("y"));
 
   environment.addPrimitive(cube);
-  environment.addPrimitive(cube2);
+  environment.drawAll(ctx, 1, 1, true);
 
   let turns = 200;
   let back = true;
 
-  setInterval(() => {
-    if (turns == 0) {
-      back = !back;
-      turns = 200;
-    }
+  // setInterval(() => {
+  //   if (turns == 0) {
+  //     back = !back;
+  //     turns = 200;
+  //   }
 
-    if (back) {
-      cube.Move(new Vector3(0, 0, 0.2));
-      turns--;
-    } else {
-      cube.Move(new Vector3(0, 0, -0.2));
-      turns--;
-    }
-    cube.Rotate(0.005, new Axis("x"));
-    cube.Rotate(0.006, new Axis("z"));
-    cube2.Rotate(0.1, new Axis("y"));
-    cube2.Rotate(0.05, new Axis("x"));
-    environment.drawAll(ctx);
-  }, 1000 / fps);
+  //   if (back) {
+  //     cube.Move(new Vector3(0, 0, 0.2));
+  //     turns--;
+  //   } else {
+  //     cube.Move(new Vector3(0, 0, -0.2));
+  //     turns--;
+  //   }
+  //   cube.Rotate(0.005, new Axis("x"));
+  //   cube.Rotate(0.006, new Axis("z"));
+
+  //   environment.drawAll(ctx, 1, 1, true);
+  // }, 1000 / fps);
 }
 
 function startIcosahedronScene() {
@@ -85,25 +126,35 @@ function startIcosahedronScene() {
   }, 1000 / fps);
 }
 
-function startModelScene() {
+function startModelScene(path: string, scale: number, position: Vector3, rotation: number[], animate: boolean = true) {
   let MyModel: Model | null = null;
 
-  Parser.ParseOBJ("./models/Stool.obj").then((model) => {
-    model.Move(new Vector3(0, 0, 200));
-    model.Rotate(Math.PI, new Axis("x"));
-    model.Rotate(Math.PI / 2, new Axis("y"));
-    model.Scale(50);
+  Parser.ParseOBJ(path).then((model) => {
+    // начальное расположение модели
+    model.Move(position);
+
+    // Начальный поворот модели
+    model.Rotate(rotation[0], new Axis("x"));
+    model.Rotate(rotation[1], new Axis("y"));
+    model.Rotate(rotation[2], new Axis("z"));
+
+    //Скалирование модели
+    model.Scale(scale);
 
     MyModel = model;
 
+    // добавление модели и отриовка
     environment.addPrimitive(model);
-    environment.drawAll(ctx, 2, 2, false);
+    environment.drawAll(ctx);
   });
 
-  setInterval(() => {
-    if (MyModel) {
-      MyModel.Rotate(0.01, new Axis("y"));
-    }
-    environment.drawAll(ctx, 2, 2, false);
-  }, 1000 / fps);
+  // анимация если анимирование включено
+  if (animate) {
+    setInterval(() => {
+      if (MyModel) {
+        MyModel.Rotate(0.01, new Axis("y"));
+      }
+      environment.drawAll(ctx, 2, 2, false);
+    }, 1000 / fps);
+  }
 }

@@ -19,5 +19,9 @@ class Matrix3x3 {
             this.elements[6] * v.x + this.elements[7] * v.y + this.elements[8] * v.z
         );
     }
+
+    public static det(a11: number, a12: number, a13: number, a21: number, a22: number, a23: number, a31: number, a32: number, a33: number) {
+        return a11 * a22 * a33 + a12 * a23 * a31 + a13 * a21 * a32 - a13 * a22 * a31 - a12 * a21 * a33 - a11 * a23 * a32;
+    }
     
 }

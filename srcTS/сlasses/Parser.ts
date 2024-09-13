@@ -2,61 +2,72 @@ abstract class Parser {
   static async ParseOBJ(path: string) {
     let vertices: Vector3[] = [];
     let indexes: number[] = [];
-    let consoled = false;
+    let normalIndexes: number[] = [];
+    let normals: Vector3[] = [];
 
-    function logNtimes(n:number) {
-      n = n
-      return function(text: string) {
-        if (n > 0) {
-          console.log(text);
-          n--
-        }
-      }
-    }
-    const log = logNtimes(10);
 
     function readVertex(row: string): void {
       const vertice = row
         .split(" ")
         .filter((x) => x !== "")
-        .map((x) => x.replace("\r", "")).slice(1);
+        .map((x) => x.replace("\r", ""))
+        .slice(1);
 
       switch (row[1]) {
-        case 't':
+        case "t":
           // texture
-          break;
-          case 'n':
-            // normal
-            break
-            default:
-              vertices.push(
-                new Vector3(Number(vertice[0]), Number(vertice[1]), Number(vertice[2]))
-              );
+          break
 
+        case "n":
+          normals.push(
+            Vector3.Normalize(
+              new Vector3(
+                Number(vertice[0]),
+                Number(vertice[1]),
+                Number(vertice[2])
+              )
+            )
+          )
+          break
 
+        default:
+          vertices.push(
+            new Vector3(
+              Number(vertice[0]),
+              Number(vertice[1]),
+              Number(vertice[2])
+            )
+          );
       }
-      
     }
 
     function readPolygon(row: string): void {
       row = row.slice(1);
-      
+      //console.log(row);
+
       const indexRow = row.split(" ").filter((x) => x !== "" && x !== "\r");
-
-      //console.log("start poly")
-      //console.log(row)
-      const splitted = indexRow.map((x) => x.split("/"));
-
-      //console.log(splitted)
+      const splitted = indexRow.map((x) => x.split("/").filter((x) => x !== ""));
 
       for (let i = 1; i < splitted.length - 1; i++) {
-        //console.log(Number(splitted[0][0]), Number(splitted[i][1]), Number(splitted[i + 1][2]))
-        indexes.push(Number(splitted[0][0]) );
+        indexes.push(Number(splitted[0][0]));
         indexes.push(Number(splitted[i][0]));
         indexes.push(Number(splitted[i + 1][0]));
-      }
 
-      
+        
+        if (row.includes("//")) {
+          // v//n
+          normalIndexes.push(Number(splitted[0][1]));
+          normalIndexes.push(Number(splitted[i][1]));
+          normalIndexes.push(Number(splitted[i + 1][1]));
+          
+        } else if (splitted[0].length === 3) {
+          // v/vt/vn
+          normalIndexes.push(Number(splitted[0][2]));
+          normalIndexes.push(Number(splitted[i][2]));
+          normalIndexes.push(Number(splitted[i + 1][2]));
+
+        }
+      }
     }
 
     return await fetch(path)
@@ -76,7 +87,7 @@ abstract class Parser {
             }
           }
         }
-        return new Model(Pivot.basePivot(Vector3.Zero()), vertices, indexes);
+        return new Model(Pivot.basePivot(Vector3.Zero()), vertices, indexes, normals, normalIndexes);
       });
   }
 }
