@@ -10,7 +10,7 @@ canvas.width = width;
 canvas.height = height;
 
 const camera = new Camera(new Vector3(0, 0, 0), 5, 100, width, height);
-const lightDirection = Vector3.Normalize(new Vector3(-1, -1, -1));
+const lightDirection = Vector3.Normalize(new Vector3(4, -10, -1));
 
 const environment = new Environment(camera, lightDirection);
 
