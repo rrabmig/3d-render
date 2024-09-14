@@ -9,21 +9,22 @@ class FongShader extends Shader {
         
 
         // Вклад каждой нормали в нормаль данной точки с данными барицентр. координатами
-        let R = Vector3.Dot(n1.MultiplyByNumber(l1), this.lightDirection);
-        let G = Vector3.Dot(n2.MultiplyByNumber(l2), this.lightDirection);
-        let B = Vector3.Dot(n3.MultiplyByNumber(l3), this.lightDirection);
+        n1 = n1.MultiplyByNumber(l1)
+        n2 = n2.MultiplyByNumber(l2)
+        n3 = n3.MultiplyByNumber(l3)
 
-        return `rgb(${Math.floor(R*255)}, ${Math.floor(G*255)}, ${Math.floor(B*255)})`
-        
-        // Суммарная нормаль
-        // let n = Vector3.Add(Vector3.Add(l1n1, l2n2), l3n3);
-        // n = Vector3.Normalize(n);
+        // результрующая нормаль
+        let n = Vector3.Add(Vector3.Add(n1, n2), n3)
 
-        // // скалярное произведение направления светового луча и нормали
-        // let dot = Vector3.Dot(n, this.lightDirection);
+        // нормализация
+        n = Vector3.Normalize(n)
 
-        // let HSLlightness = Math.round((0.5 + 0.5 * dot) * 100);
-        // let color = `hsl(${HSLhue}, 0%, ${HSLlightness}%)`;
-        // return color
+        // скалярное произведение направления светового луча и нормали
+        let dot = Vector3.Dot(n, this.lightDirection);
+
+        // диффузная часть 
+        let HSLlightness = Math.round((0.5 + 0.5 * dot) * 100);
+        let color = `hsl(${HSLhue}, 50%, ${HSLlightness}%)`;
+        return color
     }
 }

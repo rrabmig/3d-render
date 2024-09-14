@@ -14,7 +14,7 @@ class GuroShader extends Shader {
 
         let HSLlightness = Math.round((0.5 + 0.5 * dot) * 100);
 
-        let color = `hsl(${HSLhue}, 0%, ${HSLlightness}%)`;
+        let color = `hsl(${HSLhue}, 50%, ${HSLlightness}%)`;
 
         return color
     }

@@ -8,13 +8,13 @@ canvas.style.height = `${height}px`;
 canvas.width = width;
 canvas.height = height;
 const camera = new Camera(new Vector3(0, 0, 0), 5, 100, width, height);
-const lightDirection = Vector3.Normalize(new Vector3(20, 20, -1));
+const lightDirection = Vector3.Normalize(new Vector3(-30, -80, 10));
 const light = new Light(new Vector3(10, 20, 30), lightDirection, "#ffffff");
-const environment = new Environment(camera, light, "GuroShader");
+const environment = new Environment(camera, light, "FongShader");
 // Настройки сцены
 const scale = 0.2;
 const initialPosition = new Vector3(0, 2.5, 10);
-const initialRoatateXYZ = [Math.PI, 0, 0];
+const initialRoatateXYZ = [Math.PI, 0.2, 0];
 const animate = false;
 const fps = 30;
 // Разные сцены

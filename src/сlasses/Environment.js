@@ -99,16 +99,21 @@ class Environment {
         let p2 = this.camera.ScreenProjection(v2);
         let p3 = this.camera.ScreenProjection(v3);
         // сортировка по x проекций
-        if (p1.x > p2.x)
+        if (p1.x > p2.x) {
             [p1, p2] = [p2, p1];
-        [v1, v2] = [v2, v1];
-        if (p2.x > p3.x)
+            [v1, v2, n1, n2] = [v2, v1, n2, n1];
+        }
+        if (p2.x > p3.x) {
             [p2, p3] = [p3, p2];
-        [v2, v3] = [v3, v2];
-        if (p1.x > p2.x)
+            [v2, v3, n2, n3] = [v3, v2, n3, n2];
+        }
+        if (p1.x > p2.x) {
             [p1, p2] = [p2, p1];
-        [v1, v2] = [v2, v1];
-        //if (Math.floor(p1.x) == Math.floor(p2.x) && Math.floor(p1.x) == Math.floor(p3.x)) return;
+            [v1, v2, n1, n2] = [v2, v1, n2, n1];
+        }
+        if (Math.floor(p1.x) == Math.floor(p2.x) &&
+            Math.floor(p1.x) == Math.floor(p3.x))
+            return;
         // коэффициенты наклона прямых, соединящих вершины
         let d13 = (p3.y - p1.y) / (p3.x - p1.x);
         let d12 = (p2.y - p1.y) / (p2.x - p1.x);
@@ -215,7 +220,7 @@ class Environment {
             let v2 = vertices[i2 - 1];
             let v3 = vertices[i3 - 1];
             // определение цвета
-            let HSLhue = 30;
+            let HSLhue = 40;
             let color = `hsl(${HSLhue}, 100%, 50%)`;
             // Если шейдер Гуро, то определение цвета для всего полигона
             if (this.shader instanceof GuroShader) {

@@ -174,14 +174,24 @@ class Environment {
     let p3 = this.camera.ScreenProjection(v3);
 
     // сортировка по x проекций
-    if (p1.x > p2.x) [p1, p2] = [p2, p1];
-    [v1, v2] = [v2, v1];
-    if (p2.x > p3.x) [p2, p3] = [p3, p2];
-    [v2, v3] = [v3, v2];
-    if (p1.x > p2.x) [p1, p2] = [p2, p1];
-    [v1, v2] = [v2, v1];
+    if (p1.x > p2.x) {
+      [p1, p2] = [p2, p1];
+      [v1, v2, n1, n2] = [v2, v1, n2, n1];
+    }
+    if (p2.x > p3.x) {
+      [p2, p3] = [p3, p2];
+      [v2, v3, n2, n3] = [v3, v2, n3, n2];
+    }
+    if (p1.x > p2.x) {
+      [p1, p2] = [p2, p1];
+      [v1, v2, n1, n2] = [v2, v1, n2, n1];
+    }
 
-    //if (Math.floor(p1.x) == Math.floor(p2.x) && Math.floor(p1.x) == Math.floor(p3.x)) return;
+    if (
+      Math.floor(p1.x) == Math.floor(p2.x) &&
+      Math.floor(p1.x) == Math.floor(p3.x)
+    )
+      return;
 
     // коэффициенты наклона прямых, соединящих вершины
     let d13 = (p3.y - p1.y) / (p3.x - p1.x);
@@ -220,33 +230,33 @@ class Environment {
         let l3 =
           ((1 / 2) * Matrix3x3.det(p1.x, p1.y, 1, p2.x, p2.y, 1, x, y, 1)) /
           totalArea;
-          
-          l1 = Math.abs(l1);
+
+        l1 = Math.abs(l1);
         l2 = Math.abs(l2);
         l3 = Math.abs(l3);
-        
+
         // вычисляем z и z буфера
         let z = this.calcZ(v1, v2, v3, l1, l2, l3);
         let zBuf = this.zbuffer.has(`${pixelX},${pixelY}`)
-            ? this.zbuffer.get(`${pixelX},${pixelY}`)!
-            : Number.MAX_SAFE_INTEGER;
+          ? this.zbuffer.get(`${pixelX},${pixelY}`)!
+          : Number.MAX_SAFE_INTEGER;
         // если z буфера больше z пикселя, то заполняем пиксель цветом и записываем в буфер
-            if (z < zBuf) {
-              // если шейдер Фонга, то вычислим цвет
-              if (this.shader instanceof FongShader) {
-                color = this.shader.calculateColor(
-                  HSLhue!,
-                  n1!,
-                  n2!,
-                  n3!,
-                  l1,
-                  l2,
-                  l3
-                );
-              }
-              this.fillPixel(ctx, pixelX, pixelY, color);
-              this.zbuffer.set(`${pixelX},${pixelY}`, z);
-            }        
+        if (z < zBuf) {
+          // если шейдер Фонга, то вычислим цвет
+          if (this.shader instanceof FongShader) {
+            color = this.shader.calculateColor(
+              HSLhue!,
+              n1!,
+              n2!,
+              n3!,
+              l1,
+              l2,
+              l3
+            );
+          }
+          this.fillPixel(ctx, pixelX, pixelY, color);
+          this.zbuffer.set(`${pixelX},${pixelY}`, z);
+        }
       }
       // находим y-ки сторон 1-2 и 1-3 в следующей точке dy = tan*dx | dx=1, tan = d12
       y13 += d13;
@@ -275,9 +285,9 @@ class Environment {
           ((1 / 2) * Matrix3x3.det(p1.x, p1.y, 1, p2.x, p2.y, 1, x, y, 1)) /
           totalArea;
 
-          l1 = Math.abs(l1);
-          l2 = Math.abs(l2);
-          l3 = Math.abs(l3);
+        l1 = Math.abs(l1);
+        l2 = Math.abs(l2);
+        l3 = Math.abs(l3);
 
         let z = this.calcZ(v1, v2, v3, l1, l2, l3);
         let zBuf = this.zbuffer.has(`${pixelX},${pixelY}`)
@@ -332,7 +342,7 @@ class Environment {
       let v3 = vertices[i3 - 1];
 
       // определение цвета
-      let HSLhue = 30;
+      let HSLhue = 40;
       let color = `hsl(${HSLhue}, 100%, 50%)`;
       // Если шейдер Гуро, то определение цвета для всего полигона
       if (this.shader instanceof GuroShader) {
