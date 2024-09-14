@@ -45,7 +45,7 @@ class Parser {
                 // вторые элементы - текстурные вершины (могут быть пропущены)
                 if (row.includes("//")) {
                     // если пропущены
-                    // v//n
+                    // v//vn
                     normalIndexes.push(Number(splitted[0][1]));
                     normalIndexes.push(Number(splitted[i][1]));
                     normalIndexes.push(Number(splitted[i + 1][1]));

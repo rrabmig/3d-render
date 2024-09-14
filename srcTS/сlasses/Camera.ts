@@ -72,23 +72,21 @@ class Camera {
   }
 
   public ScreenProjection(v: Vector3): Vector2 {
-    //console.log('-start-')
-    //console.log(v);
     let local = this.pivot.ToLocalCoords(v);
-    //console.log(local);
 
     // точки сзади камеры
     if (local.z < 0) {
       return new Vector2(NaN, NaN);
     }
+    
     // проекция через подобные треугольники
     let delta = this.screenDistance / local.z * this.getScale();
     let projection = new Vector2(local.x * delta, local.y * delta);
-    //console.log('В экранной плоскости', projection);
+
     // перевод в экранную систему координат
     projection.x += this.screenWidth / 2;
     projection.y = this.screenHeight / 2 - projection.y;
-    //console.log('В экранной системе координат', projection);
+
     //если точка принадлежит экранной области - вернем ее
     if (
       projection.x >= 0 &&

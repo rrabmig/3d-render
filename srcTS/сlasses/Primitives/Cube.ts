@@ -3,7 +3,7 @@
 class Cube extends Primitive {
     constructor(pivot: Pivot, center: Vector3, sideLength: number) {
         const d = sideLength / 2;
-
+        
         let vertices = [
             new Vector3(center.x + d, center.y + d, center.z + d),
             new Vector3(center.x + d, center.y + d, center.z - d),

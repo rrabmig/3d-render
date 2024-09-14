@@ -1,12 +1,23 @@
 "use strict";
 class Environment {
-    constructor(camera, light) {
+    constructor(camera, light, shaderType) {
         this.primitives = [];
         this.zbuffer = new Map();
         this.camera = camera;
-        this.light = light
-            ? light
-            : Vector3.Normalize(Vector3.One());
+        this.light = light;
+        switch (shaderType) {
+            case "GuroShader":
+                this.shader = new GuroShader(this.light);
+                break;
+            case "FongShader":
+                this.shader = new FongShader(this.light);
+                break;
+            case "ShadowMapShader":
+                this.shader = new ShadowMapShader(this.light);
+                break;
+            default:
+                this.shader = new NoShader(this.light);
+        }
     }
     addPrimitive(primitive) {
         this.primitives.push(primitive);
@@ -82,7 +93,7 @@ class Environment {
         let z = Vector3.distance(this.camera.getPivot().getCenter(), interpolatedPoint);
         return z;
     }
-    computePolygon(v1, v2, v3, ctx, color) {
+    computePolygon(v1, v2, v3, ctx, color, HSLhue, n1, n2, n3) {
         // проекции вершин
         let p1 = this.camera.ScreenProjection(v1);
         let p2 = this.camera.ScreenProjection(v2);
@@ -97,6 +108,7 @@ class Environment {
         if (p1.x > p2.x)
             [p1, p2] = [p2, p1];
         [v1, v2] = [v2, v1];
+        //if (Math.floor(p1.x) == Math.floor(p2.x) && Math.floor(p1.x) == Math.floor(p3.x)) return;
         // коэффициенты наклона прямых, соединящих вершины
         let d13 = (p3.y - p1.y) / (p3.x - p1.x);
         let d12 = (p2.y - p1.y) / (p2.x - p1.x);
@@ -124,20 +136,22 @@ class Environment {
                     totalArea;
                 let l3 = ((1 / 2) * Matrix3x3.det(p1.x, p1.y, 1, p2.x, p2.y, 1, x, y, 1)) /
                     totalArea;
+                l1 = Math.abs(l1);
+                l2 = Math.abs(l2);
+                l3 = Math.abs(l3);
+                // вычисляем z и z буфера
                 let z = this.calcZ(v1, v2, v3, l1, l2, l3);
-                // проверка на наличие пикселя в буфеере
-                if (this.zbuffer.has(`${pixelX},${pixelY}`)) {
-                    // если уже отрисован, то проверим, ближе ли наша точка
-                    let zBuf = this.zbuffer.get(`${pixelX},${pixelY}`);
-                    if (z < zBuf) {
-                        this.fillPixel(ctx, pixelX, pixelY, color);
-                        this.zbuffer.set(`${pixelX},${pixelY}`, z);
+                let zBuf = this.zbuffer.has(`${pixelX},${pixelY}`)
+                    ? this.zbuffer.get(`${pixelX},${pixelY}`)
+                    : Number.MAX_SAFE_INTEGER;
+                // если z буфера больше z пикселя, то заполняем пиксель цветом и записываем в буфер
+                if (z < zBuf) {
+                    // если шейдер Фонга, то вычислим цвет
+                    if (this.shader instanceof FongShader) {
+                        color = this.shader.calculateColor(HSLhue, n1, n2, n3, l1, l2, l3);
                     }
-                }
-                else {
-                    // Если не отрисован, то можно отрисовать
-                    this.zbuffer.set(`${pixelX},${pixelY}`, z);
                     this.fillPixel(ctx, pixelX, pixelY, color);
+                    this.zbuffer.set(`${pixelX},${pixelY}`, z);
                 }
             }
             // находим y-ки сторон 1-2 и 1-3 в следующей точке dy = tan*dx | dx=1, tan = d12
@@ -159,24 +173,27 @@ class Environment {
                     totalArea;
                 let l3 = ((1 / 2) * Matrix3x3.det(p1.x, p1.y, 1, p2.x, p2.y, 1, x, y, 1)) /
                     totalArea;
+                l1 = Math.abs(l1);
+                l2 = Math.abs(l2);
+                l3 = Math.abs(l3);
                 let z = this.calcZ(v1, v2, v3, l1, l2, l3);
-                if (this.zbuffer.has(`${pixelX},${pixelY}`)) {
-                    let zBuf = this.zbuffer.get(`${pixelX},${pixelY}`);
-                    if (z < zBuf) {
-                        this.fillPixel(ctx, pixelX, pixelY, color);
-                        this.zbuffer.set(`${pixelX},${pixelY}`, z);
+                let zBuf = this.zbuffer.has(`${pixelX},${pixelY}`)
+                    ? this.zbuffer.get(`${pixelX},${pixelY}`)
+                    : Number.MAX_SAFE_INTEGER;
+                if (z < zBuf) {
+                    if (this.shader instanceof FongShader) {
+                        //console.log(color)
+                        color = this.shader.calculateColor(HSLhue, n1, n2, n3, l1, l2, l3);
                     }
-                }
-                else {
-                    this.zbuffer.set(`${pixelX},${pixelY}`, z);
                     this.fillPixel(ctx, pixelX, pixelY, color);
+                    this.zbuffer.set(`${pixelX},${pixelY}`, z);
                 }
             }
             y13 += d13;
             y23 += d23;
         }
     }
-    drawObject(primitive, ctx, color) {
+    drawObject(primitive, ctx) {
         // Получаем индексы и вершины полгона
         let indexes = primitive.getIndexes();
         let vertices = primitive.getGlobalVertices();
@@ -199,31 +216,49 @@ class Environment {
             let v3 = vertices[i3 - 1];
             // определение цвета
             let HSLhue = 30;
-            if (normals && normalIndexes) {
-                // индексы нормайлей вершин
-                let in1 = normalIndexes[i];
-                let in2 = normalIndexes[i + 1];
-                let in3 = normalIndexes[i + 2];
-                // Нормали вершин
-                let n1 = normals[in1 - 1];
-                let n2 = normals[in2 - 1];
-                let n3 = normals[in3 - 1];
-                // интерполяция нормалей вершин
-                let interpolatedNormal = Vector3.interpolate3D(n1, n2, n3);
-                // скалярное произведение направления светового луча и нормали
-                let dot = Vector3.Dot(interpolatedNormal, this.light);
-                let HSLlightness = Math.round((0.5 + 0.5 * dot) * 100);
-                color = `hsl(${HSLhue}, 0%, ${HSLlightness}%)`;
-            }
-            else {
-                color = "black";
+            let color = `hsl(${HSLhue}, 100%, 50%)`;
+            // Если шейдер Гуро, то определение цвета для всего полигона
+            if (this.shader instanceof GuroShader) {
+                if (normals && normalIndexes) {
+                    // индексы нормайлей вершин
+                    let in1 = normalIndexes[i];
+                    let in2 = normalIndexes[i + 1];
+                    let in3 = normalIndexes[i + 2];
+                    // Нормали вершин
+                    let n1 = normals[in1 - 1];
+                    let n2 = normals[in2 - 1];
+                    let n3 = normals[in3 - 1];
+                    color = this.shader.calculateColor(HSLhue, n1, n2, n3);
+                }
+                else {
+                    throw new Error("Нормали для шейдера Гуро не найдены");
+                }
             }
             // уникальный цвет для полингона
             // color = this.StringToHexColor((i1+ 234)*i2 + 234);
             // Просто цвет
             // color = "black"
             // отрисовка с z-buffer с заливкой полигона
-            this.computePolygon(v1, v2, v3, ctx, color);
+            if (this.shader instanceof FongShader) {
+                if (normals && normalIndexes) {
+                    // индексы нормайлей вершин
+                    let in1 = normalIndexes[i];
+                    let in2 = normalIndexes[i + 1];
+                    let in3 = normalIndexes[i + 2];
+                    // Нормали вершин
+                    let n1 = normals[in1 - 1];
+                    let n2 = normals[in2 - 1];
+                    let n3 = normals[in3 - 1];
+                    // отрисовываем полигон с параметрами для вычисления цвета по ФОнгуЫ
+                    this.computePolygon(v1, v2, v3, ctx, color, HSLhue, n1, n2, n3);
+                }
+                else {
+                    throw new Error("Нормали для шейдера Фонга не найдены");
+                }
+            }
+            else {
+                this.computePolygon(v1, v2, v3, ctx, color);
+            }
             // Отрисовка проволочная
             //this.drawPolygon(v1, v2, v3, ctx, color);
         }

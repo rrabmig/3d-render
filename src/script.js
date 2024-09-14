@@ -8,13 +8,14 @@ canvas.style.height = `${height}px`;
 canvas.width = width;
 canvas.height = height;
 const camera = new Camera(new Vector3(0, 0, 0), 5, 100, width, height);
-const lightDirection = Vector3.Normalize(new Vector3(4, -10, -1));
-const environment = new Environment(camera, lightDirection);
+const lightDirection = Vector3.Normalize(new Vector3(20, 20, -1));
+const light = new Light(new Vector3(10, 20, 30), lightDirection, "#ffffff");
+const environment = new Environment(camera, light, "GuroShader");
 // Настройки сцены
 const scale = 0.2;
 const initialPosition = new Vector3(0, 2.5, 10);
 const initialRoatateXYZ = [Math.PI, 0, 0];
-const animate = true;
+const animate = false;
 const fps = 30;
 // Разные сцены
 startModelScene("./models/Lee.obj", scale, initialPosition, initialRoatateXYZ, animate);
@@ -54,22 +55,25 @@ function startCubesScene() {
     environment.drawAll(ctx);
     let turns = 200;
     let back = true;
-    // setInterval(() => {
-    //   if (turns == 0) {
-    //     back = !back;
-    //     turns = 200;
-    //   }
-    //   if (back) {
-    //     cube.Move(new Vector3(0, 0, 0.2));
-    //     turns--;
-    //   } else {
-    //     cube.Move(new Vector3(0, 0, -0.2));
-    //     turns--;
-    //   }
-    //   cube.Rotate(0.005, new Axis("x"));
-    //   cube.Rotate(0.006, new Axis("z"));
-    //   environment.drawAll(ctx, 1, 1, true);
-    // }, 1000 / fps);
+    if (animate) {
+        setInterval(() => {
+            if (turns == 0) {
+                back = !back;
+                turns = 200;
+            }
+            if (back) {
+                cube.Move(new Vector3(0, 0, 0.2));
+                turns--;
+            }
+            else {
+                cube.Move(new Vector3(0, 0, -0.2));
+                turns--;
+            }
+            cube.Rotate(0.005, new Axis("x"));
+            cube.Rotate(0.006, new Axis("z"));
+            environment.drawAll(ctx);
+        }, 1000 / fps);
+    }
 }
 function startIcosahedronScene() {
     const icosahedron1 = new Icosahedron(Pivot.basePivot(new Vector3(5, 5, 60)), Vector3.Zero(), 10);
