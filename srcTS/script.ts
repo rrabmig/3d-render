@@ -14,26 +14,23 @@ const lightDirection = Vector3.Normalize(new Vector3(-1, -1, -1));
 
 const environment = new Environment(camera, lightDirection);
 
-// Разные сцены
 
+// Настройки сцены
 const scale = 0.2;
-
 const initialPosition = new Vector3(0, 2.5, 10)
 const initialRoatateXYZ = [Math.PI, 0, 0]
-
-const animate = false
+const animate = true
 const fps = 30;
+
+// Разные сцены
 startModelScene("./models/Lee.obj", scale, initialPosition, initialRoatateXYZ, animate);
-
 //startIcosahedronScene();
-
 //startCubesScene();
-
 //startTriangleScene();
 
 function startTriangleScene() {
   // передний треугольник
-  const triangle = new Triangle(Pivot.basePivot(new Vector3(0, 0, 40)), [
+  const triangle = new Triangle(Pivot.basePivot(new Vector3(0, 0, 30)), [
     new Vector3(20, 0, 0),
     new Vector3(0, 0, 10),
     new Vector3(0, 20, 0),
@@ -42,7 +39,9 @@ function startTriangleScene() {
   triangle.Rotate(Math.PI / 5, new Axis("z"));
   triangle.Rotate(Math.PI / 7, new Axis("y"));
   triangle.Move(new Vector3(0, 0, 40));
+  environment.addPrimitive(triangle);
 
+  // задний треугольник
   const triangle2 = new Triangle(Pivot.basePivot(new Vector3(0, 0, 40)), [
     new Vector3(20, 0, 0),
     new Vector3(0, 0, 10),
@@ -51,9 +50,8 @@ function startTriangleScene() {
   triangle2.Rotate(Math.PI / 4, new Axis("x"));
   triangle2.Rotate(Math.PI / 5, new Axis("z"));
   triangle2.Move(new Vector3(0, 0, 60));
-
-  environment.addPrimitive(triangle);
   environment.addPrimitive(triangle2);
+
   environment.drawAll(ctx);
 }
 
@@ -68,7 +66,7 @@ function startCubesScene() {
   cube.Rotate(Math.PI / 7, new Axis("y"));
 
   environment.addPrimitive(cube);
-  environment.drawAll(ctx, 1, 1, true);
+  environment.drawAll(ctx);
 
   let turns = 200;
   let back = true;
@@ -154,7 +152,7 @@ function startModelScene(path: string, scale: number, position: Vector3, rotatio
       if (MyModel) {
         MyModel.Rotate(0.01, new Axis("y"));
       }
-      environment.drawAll(ctx, 2, 2, false);
+      environment.drawAll(ctx);
     }, 1000 / fps);
   }
 }

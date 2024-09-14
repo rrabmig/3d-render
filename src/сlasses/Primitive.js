@@ -3,7 +3,7 @@ class Primitive {
     constructor(pivot, localVertices, indexes) {
         this.pivot = pivot;
         this.localVertices = localVertices;
-        this.globalVertices = localVertices.map(v => pivot.ToGlobalCoords(v));
+        this.globalVertices = localVertices.map((v) => pivot.ToGlobalCoords(v));
         this.indexes = indexes;
     }
     getPivot() {
@@ -20,11 +20,11 @@ class Primitive {
     }
     setLocalVertices(vertices) {
         this.localVertices = vertices;
-        this.globalVertices = vertices.map(v => this.pivot.ToGlobalCoords(v));
+        this.globalVertices = vertices.map((v) => this.pivot.ToGlobalCoords(v));
     }
     setGlobalVertices(vertices) {
         this.globalVertices = vertices;
-        this.localVertices = vertices.map(v => this.pivot.ToLocalCoords(v));
+        this.localVertices = vertices.map((v) => this.pivot.ToLocalCoords(v));
     }
     setIndexes(indexes) {
         this.indexes = indexes;
@@ -37,12 +37,12 @@ class Primitive {
     }
     Rotate(angle, axis) {
         this.pivot.Rotate(angle, axis);
-        this.globalVertices = this.localVertices.map(v => this.pivot.ToGlobalCoords(v));
+        this.globalVertices = this.localVertices.map((v) => this.pivot.ToGlobalCoords(v));
     }
     Scale(k) {
         for (let i = 0; i < this.localVertices.length; i++) {
             this.localVertices[i] = this.localVertices[i].MultiplyByNumber(k);
         }
-        this.globalVertices = this.localVertices.map(v => this.pivot.ToGlobalCoords(v));
+        this.globalVertices = this.localVertices.map((v) => this.pivot.ToGlobalCoords(v));
     }
 }

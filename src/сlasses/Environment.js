@@ -6,7 +6,10 @@ class Environment {
         this.camera = camera;
         this.light = light
             ? light
-            : new Vector3(Math.sqrt(0.33), Math.sqrt(0.33), Math.sqrt(0.33));
+            : Vector3.Normalize(Vector3.One());
+    }
+    addPrimitive(primitive) {
+        this.primitives.push(primitive);
     }
     fillPixel(ctx, x, y, color) {
         ctx.fillStyle = color;
@@ -19,65 +22,41 @@ class Environment {
         return `#${hexColor}`;
     }
     drawLineBrezenkhem(start, end, ctx, color) {
-        // Не Алгоритм Брезенхема, я модифицировал
-        color = color ? color : "#000000";
-        let x1;
-        let x2;
-        let y1;
-        let y2;
-        if (start.x >= end.x) {
-            x1 = Math.floor(end.x);
-            y1 = Math.floor(end.y);
-            x2 = Math.floor(start.x);
-            y2 = Math.floor(start.y);
-        }
-        else {
-            x1 = Math.floor(start.x);
-            y1 = Math.floor(start.y);
-            x2 = Math.floor(end.x);
-            y2 = Math.floor(end.y);
-        }
-        // vertical line
+        // Не Алгоритм Брезенхема, я слегка изменил
+        let x1 = Math.floor(Math.min(start.x, end.x));
+        let x2 = Math.floor(Math.max(start.x, end.x));
+        let y1 = x1 === start.x ? start.y : end.y;
+        let y2 = x1 === start.x ? end.y : start.y;
+        // Вертикальная линия
         if (x1 == x2) {
             for (let y = Math.floor(start.y); y <= Math.floor(end.y); y++) {
                 this.fillPixel(ctx, x1, y, color);
             }
             return;
         }
+        // коэф наклона
         let d = (y2 - y1) / (x2 - x1);
+        // y текущий
         let y = y1;
         for (let x = x1; x <= x2; x++) {
+            // y, который будет в x + 1
             let nextY = y1 + d * (x - x1);
-            if (d > 0) {
-                for (let pixelY = Math.floor(y); pixelY <= Math.floor(nextY); pixelY++) {
-                    this.fillPixel(ctx, x, pixelY, color);
-                }
+            let minY = Math.floor(Math.min(y, nextY));
+            let maxY = Math.floor(Math.max(y, nextY));
+            // заполняем столбец
+            for (let pixelY = minY; pixelY <= maxY; pixelY++) {
+                this.fillPixel(ctx, x, pixelY, color);
             }
-            else {
-                for (let pixelY = Math.floor(y); pixelY >= Math.floor(nextY); pixelY--) {
-                    this.fillPixel(ctx, x, pixelY, color);
-                }
-            }
+            // смещаем y
             y = nextY;
         }
-    }
-    addPrimitive(primitive) {
-        this.primitives.push(primitive);
-    }
-    drawLineByScreenCoords(start, end, ctx, color) {
-        color = color ? color : Math.floor(Math.random() * 16777215).toString(16);
-        ctx.strokeStyle = color;
-        // рисуем
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        //ctx.stroke();
     }
     drawPointByScreenCoords(point, ctx, color, width) {
         // рисуем
         ctx.strokeStyle = color;
         ctx.fillRect(point.x - width / 2, point.y - width / 2, width, width);
     }
-    drawPolygon(v1, v2, v3, ctx, pointwidth, color, i1, i2, i3) {
+    drawPolygon(v1, v2, v3, ctx, color) {
         color = color ? color : Math.floor(Math.random() * 16777215).toString(16);
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
@@ -88,14 +67,13 @@ class Environment {
         // сортировка по x
         [p1, p2, p3] = [p1, p2, p3].sort((a, b) => a.x - b.x);
         // рисуем линии
-        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
         this.drawLineBrezenkhem(p1, p2, ctx, color);
         this.drawLineBrezenkhem(p2, p3, ctx, color);
         this.drawLineBrezenkhem(p3, p1, ctx, color);
         // рисуем вершины
-        this.drawPointByScreenCoords(p1, ctx, "#000000", pointwidth);
-        this.drawPointByScreenCoords(p2, ctx, "#000000", pointwidth);
-        this.drawPointByScreenCoords(p3, ctx, "#000000", pointwidth);
+        this.drawPointByScreenCoords(p1, ctx, "#000000", 2);
+        this.drawPointByScreenCoords(p2, ctx, "#000000", 2);
+        this.drawPointByScreenCoords(p3, ctx, "#000000", 2);
     }
     calcZ(v1, v2, v3, l1, l2, l3) {
         // Расчет z для точки, между v1, v2, v3 с барицентрическими координатами l1, l2, l3
@@ -126,15 +104,20 @@ class Environment {
         // площадь проекции полигона
         let totalArea = (1 / 2) *
             Math.abs(Matrix3x3.det(p1.x, p1.y, 1, p2.x, p2.y, 1, p3.x, p3.y, 1));
-        // левая сторона
+        // Левая половина
+        // Начальные у-ки сторон 1-3 и 1-2
         let y13 = p1.y;
         let y12 = p1.y;
+        // движемся по иксу
         for (let x = p1.x; x <= p2.x; x++) {
             let pixelX = Math.floor(x);
+            // определяем нижнюю и верхнюю границу
             let lowY = Math.min(y13, y12);
             let highY = Math.max(y13, y12);
+            // заполняем пиксели сверху вниз
             for (let y = lowY; y <= highY; y++) {
                 let pixelY = Math.floor(y);
+                // для каждого пикселя вычисляем барицентрические координаты
                 let l1 = ((1 / 2) * Matrix3x3.det(x, y, 1, p2.x, p2.y, 1, p3.x, p3.y, 1)) /
                     totalArea;
                 let l2 = ((1 / 2) * Matrix3x3.det(p1.x, p1.y, 1, x, y, 1, p3.x, p3.y, 1)) /
@@ -142,7 +125,9 @@ class Environment {
                 let l3 = ((1 / 2) * Matrix3x3.det(p1.x, p1.y, 1, p2.x, p2.y, 1, x, y, 1)) /
                     totalArea;
                 let z = this.calcZ(v1, v2, v3, l1, l2, l3);
+                // проверка на наличие пикселя в буфеере
                 if (this.zbuffer.has(`${pixelX},${pixelY}`)) {
+                    // если уже отрисован, то проверим, ближе ли наша точка
                     let zBuf = this.zbuffer.get(`${pixelX},${pixelY}`);
                     if (z < zBuf) {
                         this.fillPixel(ctx, pixelX, pixelY, color);
@@ -150,14 +135,16 @@ class Environment {
                     }
                 }
                 else {
+                    // Если не отрисован, то можно отрисовать
                     this.zbuffer.set(`${pixelX},${pixelY}`, z);
                     this.fillPixel(ctx, pixelX, pixelY, color);
                 }
             }
+            // находим y-ки сторон 1-2 и 1-3 в следующей точке dy = tan*dx | dx=1, tan = d12
             y13 += d13;
             y12 += d12;
         }
-        // правая сторона
+        // правая сторона аналгично
         y13 = y13;
         let y23 = p2.y;
         for (let x = p2.x; x <= p3.x; x++) {
@@ -189,7 +176,7 @@ class Environment {
             y23 += d23;
         }
     }
-    drawObject(primitive, ctx, pointwidth, showIndexes = false, color) {
+    drawObject(primitive, ctx, color) {
         // Получаем индексы и вершины полгона
         let indexes = primitive.getIndexes();
         let vertices = primitive.getGlobalVertices();
@@ -238,17 +225,15 @@ class Environment {
             // отрисовка с z-buffer с заливкой полигона
             this.computePolygon(v1, v2, v3, ctx, color);
             // Отрисовка проволочная
-            // this.drawPolygon(v1, v2, v3, ctx, pointwidth, color, i1, i2, i3);
+            //this.drawPolygon(v1, v2, v3, ctx, color);
         }
     }
-    drawAll(ctx, linewidth, pointwidth, showIndexes) {
-        // dafault
-        ctx.lineWidth = linewidth ? linewidth : 1;
-        pointwidth = pointwidth ? pointwidth : 5;
-        showIndexes = showIndexes ? showIndexes : false;
+    drawAll(ctx) {
+        // Очистка канваса
         ctx.clearRect(0, 0, 600, 600);
+        // Отрисовка каждого объекта
         for (const primitive of this.primitives) {
-            this.drawObject(primitive, ctx, pointwidth, showIndexes);
+            this.drawObject(primitive, ctx);
         }
         // Очистка Z-buffer
         this.zbuffer = new Map();

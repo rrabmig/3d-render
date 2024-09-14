@@ -32,27 +32,44 @@ class Pivot {
   // матрица перевода в локальные координаты
   public LocalCoordsMatrix() {
     return new Matrix3x3(
-      this.XAxis.x, this.YAxis.x, this.ZAxis.x,
-      this.XAxis.y, this.YAxis.y, this.ZAxis.y,
-      this.XAxis.z, this.YAxis.z, this.ZAxis.z
+      this.XAxis.x,
+      this.YAxis.x,
+      this.ZAxis.x,
+      this.XAxis.y,
+      this.YAxis.y,
+      this.ZAxis.y,
+      this.XAxis.z,
+      this.YAxis.z,
+      this.ZAxis.z
     );
   }
 
   // матрица перевода в глобальные координаты
   public GlobalCoordsMatrix(): Matrix3x3 {
     return new Matrix3x3(
-      this.XAxis.x, this.XAxis.y, this.XAxis.z,
-      this.YAxis.x, this.YAxis.y, this.YAxis.z,
-      this.ZAxis.x, this.ZAxis.y, this.ZAxis.z
+      this.XAxis.x,
+      this.XAxis.y,
+      this.XAxis.z,
+      this.YAxis.x,
+      this.YAxis.y,
+      this.YAxis.z,
+      this.ZAxis.x,
+      this.ZAxis.y,
+      this.ZAxis.z
     );
   }
 
   public ToLocalCoords(global: Vector3): Vector3 {
-    return this.LocalCoordsMatrix().MultiplyByVector3(Vector3.Sub(global, this.center));
+    return this.LocalCoordsMatrix().MultiplyByVector3(
+      Vector3.Sub(global, this.center)
+    );
   }
 
   public ToGlobalCoords(local: Vector3): Vector3 {
-    return Vector3.Add(this.GlobalCoordsMatrix().MultiplyByVector3(local), this.center);
+    return Vector3.Add(
+      this.GlobalCoordsMatrix().MultiplyByVector3(local),
+      this.center
+    );
   }
 
   public Move(v: Vector3): void {

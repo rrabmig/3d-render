@@ -6,7 +6,4 @@ class Axis {
     getAxis() {
         return this.axis;
     }
-    RotateVector3(v, angle) {
-        return v;
-    }
 }
